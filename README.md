@@ -128,3 +128,13 @@ cd FirstSight
 
 - [wechat_video_call](https://github.com/davidche1116/wechat_video_call)
 - [微信控件混淆导致节点无法识别解决方案](https://zhuanlan.zhihu.com/p/1898312642701026938)
+
+---
+
+## 赞赏支持
+
+如果项目对您有帮助，就请作者喝杯咖啡吧！
+
+| 支付宝 | 微信支付 |
+| :---: | :---: |
+| <img src="docs/images/alipay.jpg" width="220" alt="支付宝收款码"> | <img src="docs/images/wechatpay.jpg" width="220" alt="微信支付收款码"> |
