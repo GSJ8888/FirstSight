@@ -1,0 +1,30 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Kotlin compiler session cache
+.kotlin
+
+# Android Studio local IDE config that changes per machine
+.idea/misc.xml
+.idea/caches/
+.idea/deploymentTargetSelector.xml
+.idea/migrations.xml
+.idea/runConfigurations.xml
+.idea/deviceManager.xml
+
+# Local SDK path, must not be committed
+local.properties
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# UI 设计预览文件，不参与构建
+ui-preview.html
+
+# 签名密钥文件，禁止提交到版本库
+*.jks
+*.keystore

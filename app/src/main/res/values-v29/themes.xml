@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <!--
+    关闭系统的强制深色（force dark）。
+    Compose 已经有自己的深色配色，系统再叠加反色会让文字和背景都变灰，
+    对比度反而更差。
+  -->
+  <style name="Theme.FirstSight" parent="android:Theme.Material.Light.NoActionBar">
+    <item name="android:forceDarkAllowed">false</item>
+  </style>
+
+</resources>

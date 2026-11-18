@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Common Colors -->
+  <color name="purple_200">#FFBB86FC</color>
+  <color name="purple_500">#FF6200EE</color>
+  <color name="purple_700">#FF3700B3</color>
+  <color name="teal_200">#FF03DAC5</color>
+  <color name="teal_700">#FF018786</color>
+  <color name="black">#FF000000</color>
+  <color name="white">#FFFFFFFF</color>
+  <color name="gray">#808080</color>
+  <color name="light_gray">#F5F5F5</color>
+  <color name="outline">#85736B</color>
+
+  <!-- Primary Colors -->
+  <color name="primary_color">#2E90E8</color>
+  <color name="on_primary">#FFFFFF</color>
+  <color name="primary_container">#E0EFFF</color>
+  <color name="on_primary_container">#1264AB</color>
+
+  <!-- 渐变色，用于头图和主要按钮 -->
+  <color name="gradient_start">#4FA6F2</color>
+  <color name="gradient_end">#1E7FD8</color>
+  <color name="primary_light">#57A9F5</color>
+  <color name="primary_dark">#1A7BD0</color>
+
+  <!-- 整页背景渐变 -->
+  <color name="page_gradient_top">#E8F2FC</color>
+  <color name="page_gradient_mid">#F5F9FE</color>
+  <color name="page_gradient_bottom">#EDF4FB</color>
+
+  <!-- 呼叫面板按钮渐变 -->
+  <color name="action_video_gradient_start">#5FD394</color>
+  <color name="action_video_gradient_end">#35B574</color>
+  <color name="action_voice_gradient_start">#FFB05C</color>
+  <color name="action_voice_gradient_end">#F58A2E</color>
+  <color name="action_call_gradient_start">#5AAAF5</color>
+  <color name="action_call_gradient_end">#1E7FD8</color>
+
+  <!-- 常用应用图标底色 -->
+  <color name="app_icon_wx_start">#E8FBEF</color>
+  <color name="app_icon_wx_end">#D2F5E0</color>
+  <color name="app_icon_other_start">#F0EEFF</color>
+  <color name="app_icon_other_end">#E2DEFC</color>
+
+  <!-- Secondary Colors -->
+  <color name="secondary_color">#77574A</color>
+  <color name="on_secondary">#FFFFFF</color>
+  <color name="secondary_container">#FFDDD1</color>
+  <color name="on_secondary_container">#2C160C</color>
+
+  <!-- Tertiary Colors -->
+  <color name="tertiary_color">#6C5D2F</color>
+  <color name="on_tertiary">#FFFFFF</color>
+  <color name="tertiary_container">#F5E1A6</color>
+  <color name="on_tertiary_container">#231B00</color>
+
+  <!-- Error Colors -->
+  <color name="error_color">#BA1A1A</color>
+  <color name="on_error">#FFFFFF</color>
+  <color name="error_container">#FFDAD6</color>
+  <color name="on_error_container">#410002</color>
+
+  <!-- Background Colors -->
+  <color name="background">#F2F7FD</color>
+  <color name="on_background">#16202B</color>
+  <color name="surface">#FFFFFF</color>
+  <color name="on_surface">#16202B</color>
+  <color name="surface_variant">#E0EFFF</color>
+  <color name="on_surface_variant">#4A5A6A</color>
+  <color name="text_secondary">#8595A5</color>
+  <color name="line">#E4EDF6</color>
+
+  <!-- 联系人头像渐变，按索引循环使用 -->
+  <color name="avatar_gradient_1_start">#6FBBF8</color>
+  <color name="avatar_gradient_1_end">#2E90E8</color>
+  <color name="avatar_gradient_2_start">#7DD3A8</color>
+  <color name="avatar_gradient_2_end">#35A870</color>
+  <color name="avatar_gradient_3_start">#FFB865</color>
+  <color name="avatar_gradient_3_end">#F58A2E</color>
+  <color name="avatar_gradient_4_start">#A79BF5</color>
+  <color name="avatar_gradient_4_end">#7C6BEA</color>
+  <color name="avatar_gradient_5_start">#F58FA6</color>
+  <color name="avatar_gradient_5_end">#E4637F</color>
+  <color name="avatar_gradient_6_start">#64C8D4</color>
+  <color name="avatar_gradient_6_end">#2FA0AE</color>
+
+  <!-- App Specific Colors -->
+  <color name="contact_card_background">#FFFFFF</color>
+  <color name="contact_card_border">#EEEEEE</color>
+  <color name="app_item_background">#FFFFFF</color>
+  <color name="settings_item_background">#F8F9FA</color>
+
+  <!-- 呼叫提醒卡 -->
+  <color name="alert_warning_start">#FFF4E8</color>
+  <color name="alert_warning_end">#FFEBD6</color>
+  <color name="alert_warning_border">#FFDFC0</color>
+  <color name="alert_warning_text">#94530C</color>
+  <color name="alert_warning_text_sub">#B0762F</color>
+
+  <!-- Button Colors -->
+  <color name="button_primary">#2E90E8</color>
+  <color name="button_secondary">#57A9F5</color>
+  <color name="button_success">#4CAF50</color>
+  <color name="button_warning">#FF9800</color>
+  <color name="button_error">#F44336</color>
+
+  <!-- Action Colors -->
+  <color name="action_video_background">#56CC74</color>
+  <color name="action_phone_background">#1875F8</color>
+  <color name="action_voice_background">#FA9A2C</color>
+  <color name="action_cancel_background">#F35258</color>
+
+  <!-- Orange Theme Colors -->
+  <color name="orange_primary">#FF6B35</color>
+  <color name="orange_primary_container">#FFF3E0</color>
+  <color name="orange_on_primary_container">#BF360C</color>
+  <color name="orange_secondary">#E65100</color>
+  <color name="orange_secondary_container">#FFAB91</color>
+  <color name="orange_on_secondary_container">#3E2723</color>
+  <color name="orange_tertiary">#FF8F00</color>
+  <color name="orange_tertiary_container">#FFE082</color>
+  <color name="orange_on_tertiary_container">#4E342E</color>
+
+  <!-- Orange Action Colors -->
+  <color name="orange_action_video_background">#FFF3E0</color>
+  <color name="orange_action_video_text">#E65100</color>
+  <color name="orange_action_phone_background">#E8F5E8</color>
+  <color name="orange_action_phone_text">#388E3C</color>
+  <color name="orange_action_voice_background">#FFF3E0</color>
+  <color name="orange_action_voice_text">#FF6B35</color>
+
+  <!-- High Contrast Mode -->
+  <color name="high_contrast_background">#000000</color>
+  <color name="high_contrast_on_background">#FFFFFF</color>
+  <color name="high_contrast_surface">#000000</color>
+  <color name="high_contrast_on_surface">#FFFFFF</color>
+</resources>

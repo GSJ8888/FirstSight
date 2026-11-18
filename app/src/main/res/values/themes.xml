@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <!--
+    浅色窗口主题。深色版本在 values-night/themes.xml。
+    窗口主题必须与 Compose 配色一起跟随系统，否则深色模式下 ROM 会强制反色，
+    导致 Compose 绘制的文字与背景对比度失衡。
+  -->
+  <style name="Theme.FirstSight" parent="android:Theme.Material.Light.NoActionBar" />
+
+</resources>

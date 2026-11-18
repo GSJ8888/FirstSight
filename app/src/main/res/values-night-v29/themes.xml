@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <!-- 深色窗口主题，与 Compose 深色配色保持一致，并关闭系统强制反色 -->
+  <style name="Theme.FirstSight" parent="android:Theme.Material.NoActionBar">
+    <item name="android:forceDarkAllowed">false</item>
+  </style>
+
+</resources>
