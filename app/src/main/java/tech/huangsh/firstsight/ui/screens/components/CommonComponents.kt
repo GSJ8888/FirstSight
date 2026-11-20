@@ -1,8 +1,17 @@
 package tech.huangsh.firstsight.ui.screens.components
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -174,10 +183,10 @@ fun ContactItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactActionBottomSheet(
-    contact: Contact,
+    visible: Boolean,
+    contact: Contact?,
     isNetworkAvailable: Boolean = true,
     isSimReady: Boolean = true,
     onDismiss: () -> Unit,
@@ -186,97 +195,143 @@ fun ContactActionBottomSheet(
     onPhoneCall: (String) -> Unit,
     onCancelCall: () -> Unit
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+    BackHandler(enabled = visible) {
+        onDismiss()
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = visible && contact != null,
+            enter = fadeIn(animationSpec = tween(durationMillis = 180)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 150))
         ) {
-            if (contact.hasVideoCall) {
-                val videoLabel = if (isNetworkAvailable) {
-                    stringResource(R.string.wechat_video)
-                } else {
-                    "${stringResource(R.string.wechat_video)}（无网络）"
-                }
-                ActionButton(
-                    icon = FirstSightIcons.VideoCall,
-                    text = videoLabel,
-                    backgroundColor = if (isNetworkAvailable) {
-                        FirstSightStyle.profileColors(FirstSightPalette.LightVideoStart, FirstSightPalette.DarkVideoStart)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                    contentColor = if (isNetworkAvailable) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    backgroundBrush = if (isNetworkAvailable) FirstSightStyle.videoButtonGradient() else null,
-                    onClick = onVideoCall
-                )
-                Spacer(modifier = Modifier.height(15.dp))
-            }
-
-            if (contact.hasVoiceCall) {
-                val voiceLabel = if (isNetworkAvailable) {
-                    stringResource(R.string.wechat_voice)
-                } else {
-                    "${stringResource(R.string.wechat_voice)}（无网络）"
-                }
-                ActionButton(
-                    icon = Icons.Default.Phone,
-                    text = voiceLabel,
-                    backgroundColor = if (isNetworkAvailable) {
-                        FirstSightStyle.profileColors(FirstSightPalette.LightVoiceStart, FirstSightPalette.DarkVoiceStart)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                    contentColor = if (isNetworkAvailable) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    backgroundBrush = if (isNetworkAvailable) FirstSightStyle.voiceButtonGradient() else null,
-                    onClick = onVoiceCall
-                )
-                Spacer(modifier = Modifier.height(15.dp))
-            }
-
-            if (contact.hasPhoneCall && !contact.phone.isNullOrBlank()) {
-                val callLabel = if (isSimReady) {
-                    stringResource(R.string.phone_call)
-                } else {
-                    "${stringResource(R.string.phone_call)}（未插卡）"
-                }
-                ActionButton(
-                    icon = Icons.Default.Call,
-                    text = callLabel,
-                    backgroundColor = if (isSimReady) {
-                        FirstSightStyle.profileColors(FirstSightPalette.LightCallStart, FirstSightPalette.DarkCallStart)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                    contentColor = if (isSimReady) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    backgroundBrush = if (isSimReady) FirstSightStyle.callButtonGradient() else null,
-                    onClick = { contact.phone?.let { onPhoneCall(it) } }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            ActionButton(
-                text = stringResource(R.string.cancel),
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = { onCancelCall() }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss
+                    )
             )
+        }
+
+        AnimatedVisibility(
+            visible = visible && contact != null,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(
+                animationSpec = tween(durationMillis = 220),
+                initialOffsetY = { it }
+            ) + fadeIn(animationSpec = tween(durationMillis = 160)),
+            exit = slideOutVertically(
+                animationSpec = tween(durationMillis = 180),
+                targetOffsetY = { it }
+            ) + fadeOut(animationSpec = tween(durationMillis = 140))
+        ) {
+            val activeContact = contact ?: return@AnimatedVisibility
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    ),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 22.dp)
+                ) {
+                    if (activeContact.hasVideoCall) {
+                        val videoLabel = if (isNetworkAvailable) {
+                            stringResource(R.string.wechat_video)
+                        } else {
+                            "${stringResource(R.string.wechat_video)}（无网络）"
+                        }
+                        ActionButton(
+                            icon = FirstSightIcons.VideoCall,
+                            text = videoLabel,
+                            backgroundColor = if (isNetworkAvailable) {
+                                FirstSightStyle.profileColors(FirstSightPalette.LightVideoStart, FirstSightPalette.DarkVideoStart)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            contentColor = if (isNetworkAvailable) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            backgroundBrush = if (isNetworkAvailable) FirstSightStyle.videoButtonGradient() else null,
+                            onClick = onVideoCall
+                        )
+                        Spacer(modifier = Modifier.height(15.dp))
+                    }
+
+                    if (activeContact.hasVoiceCall) {
+                        val voiceLabel = if (isNetworkAvailable) {
+                            stringResource(R.string.wechat_voice)
+                        } else {
+                            "${stringResource(R.string.wechat_voice)}（无网络）"
+                        }
+                        ActionButton(
+                            icon = Icons.Default.Phone,
+                            text = voiceLabel,
+                            backgroundColor = if (isNetworkAvailable) {
+                                FirstSightStyle.profileColors(FirstSightPalette.LightVoiceStart, FirstSightPalette.DarkVoiceStart)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            contentColor = if (isNetworkAvailable) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            backgroundBrush = if (isNetworkAvailable) FirstSightStyle.voiceButtonGradient() else null,
+                            onClick = onVoiceCall
+                        )
+                        Spacer(modifier = Modifier.height(15.dp))
+                    }
+
+                    if (activeContact.hasPhoneCall && !activeContact.phone.isNullOrBlank()) {
+                        val callLabel = if (isSimReady) {
+                            stringResource(R.string.phone_call)
+                        } else {
+                            "${stringResource(R.string.phone_call)}（未插卡）"
+                        }
+                        ActionButton(
+                            icon = Icons.Default.Call,
+                            text = callLabel,
+                            backgroundColor = if (isSimReady) {
+                                FirstSightStyle.profileColors(FirstSightPalette.LightCallStart, FirstSightPalette.DarkCallStart)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            contentColor = if (isSimReady) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            backgroundBrush = if (isSimReady) FirstSightStyle.callButtonGradient() else null,
+                            onClick = { activeContact.phone?.let { onPhoneCall(it) } }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    ActionButton(
+                        text = stringResource(R.string.cancel),
+                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        onClick = { onCancelCall() }
+                    )
+                }
+            }
         }
     }
 }

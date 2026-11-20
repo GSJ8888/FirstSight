@@ -158,7 +158,7 @@
   <string name="onboarding_title">欢迎使用一见</string>
   <string name="onboarding_subtitle">只需完成下面几项设置，就能正常使用了</string>
   <string name="onboarding_group_basic">基本权限</string>
-  <string name="onboarding_group_basic_desc">用于拨打电话、导入联系人、拍摄头像和获取天气</string>
+  <string name="onboarding_group_basic_desc">用于拨打电话、导入联系人、拍摄头像、获取天气和读取应用列表</string>
   <string name="onboarding_group_accessibility">无障碍服务</string>
   <string name="onboarding_group_accessibility_desc">一键微信视频、微信语音通话必须开启此服务</string>
   <string name="onboarding_group_overlay">悬浮窗权限</string>

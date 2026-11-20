@@ -279,43 +279,45 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
 
-        // 底部菜单
-        if (showBottomSheet && selectedContact != null) {
-            ContactActionBottomSheet(
-                contact = selectedContact!!,
-                isNetworkAvailable = isNetworkAvailable,
-                isSimReady = isSimReady,
-                onDismiss = { viewModel.hideBottomSheet() },
-                onVideoCall = {
-                    viewModel.startWeChatVideoCall(
-                        selectedContact!!.wechatNickname,
-                        selectedContact!!.name
-                    )
-                    if (isNetworkAvailable) {
-                        viewModel.hideBottomSheet()
-                    }
-                },
-                onVoiceCall = {
-                    viewModel.startWeChatVoiceCall(
-                        selectedContact!!.wechatNickname,
-                        selectedContact!!.name
-                    )
-                    if (isNetworkAvailable) {
-                        viewModel.hideBottomSheet()
-                    }
-                },
-                onPhoneCall = { phone ->
-                    if (viewModel.checkSimForPhoneCall()) {
-                        // 使用XXPermissions申请电话权限并拨打电话
-                        requestPhonePermissionAndCall(phone, selectedContact!!.name)
-                        viewModel.hideBottomSheet()
-                    }
-                },
-                onCancelCall = {
+        // 底部菜单（使用同窗口内联动画层，避免 ModalBottomSheet 每次新建 DialogWindow 导致掉帧）
+        ContactActionBottomSheet(
+            visible = showBottomSheet && selectedContact != null,
+            contact = selectedContact,
+            isNetworkAvailable = isNetworkAvailable,
+            isSimReady = isSimReady,
+            onDismiss = { viewModel.hideBottomSheet() },
+            onVideoCall = {
+                val contact = selectedContact ?: return@ContactActionBottomSheet
+                viewModel.startWeChatVideoCall(
+                    contact.wechatNickname,
+                    contact.name
+                )
+                if (isNetworkAvailable) {
                     viewModel.hideBottomSheet()
                 }
-            )
-        }
+            },
+            onVoiceCall = {
+                val contact = selectedContact ?: return@ContactActionBottomSheet
+                viewModel.startWeChatVoiceCall(
+                    contact.wechatNickname,
+                    contact.name
+                )
+                if (isNetworkAvailable) {
+                    viewModel.hideBottomSheet()
+                }
+            },
+            onPhoneCall = { phone ->
+                val contact = selectedContact ?: return@ContactActionBottomSheet
+                if (viewModel.checkSimForPhoneCall()) {
+                    // 使用XXPermissions申请电话权限并拨打电话
+                    requestPhonePermissionAndCall(phone, contact.name)
+                    viewModel.hideBottomSheet()
+                }
+            },
+            onCancelCall = {
+                viewModel.hideBottomSheet()
+            }
+        )
 
         // 连点 7 次后的进入设置确认弹窗
         if (showSettingsConfirm) {

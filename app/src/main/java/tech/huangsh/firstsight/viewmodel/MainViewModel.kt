@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -354,12 +355,16 @@ class MainViewModel @Inject constructor(
     
     /**
      * 显示联系人操作菜单
+     *
+     * 网络/SIM 状态刷新与 TTS 播报均异步执行，避免阻塞弹窗首帧动画造成掉帧
      */
     fun showContactActions(contact: Contact) {
-        _isNetworkAvailable.value = NetworkUtils.isNetworkAvailable(appContext)
-        _isSimReady.value = NetworkUtils.isSimReady(appContext)
         _selectedContact.value = contact
         _showBottomSheet.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            _isNetworkAvailable.value = NetworkUtils.isNetworkAvailable(appContext)
+            _isSimReady.value = NetworkUtils.isSimReady(appContext)
+        }
         // 朗读姓名，让视弱用户确认点对了人
         speak(contact.name)
     }
@@ -367,10 +372,10 @@ class MainViewModel @Inject constructor(
     /**
      * 按当前语音设置朗读文本
      *
-     * 语音反馈关闭时不播报，也不产生任何开销。
+     * 语音反馈关闭时不播报，也不产生任何开销；在 IO 线程发起跨进程 TTS 调用避免阻塞主线程渲染。
      */
     private fun speak(text: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val current = settingsRepository.settings.first()
             if (!current.voiceEnabled) return@launch
             voiceAssistant.speak(

@@ -231,41 +231,54 @@ fun AppManagementScreen(
             }
         )
         
-        // 搜索输入框
+        // 搜索输入框（与下方应用卡片保持统一的圆角、背景与边距）
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            shape = FirstSightStyle.cardLarge,
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = FirstSightStyle.cardMedium,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
-            OutlinedTextField(
+            TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("搜索应用") },
+                placeholder = {
+                    Text(
+                        text = "搜索应用",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "搜索")
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "搜索",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = "清除")
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "清除",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 singleLine = true,
-                shape = FirstSightStyle.cardLarge,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
                     cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
@@ -273,31 +286,23 @@ fun AppManagementScreen(
         
         // 加载状态提示
         if (isLoading) {
-            Card(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "正在刷新应用列表...",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "正在刷新应用列表...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
         
@@ -306,9 +311,9 @@ fun AppManagementScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(top = 4.dp, bottom = 32.dp)
         ) {
             // 过滤应用：排除系统应用但保留用户常用的，并支持搜索
             val filteredApps = availableApps.filter { app ->
@@ -469,46 +474,66 @@ fun AppManagementItem(
     isEnabled: Boolean,
     onToggle: (Boolean) -> Unit
 ) {
+    val iconBitmap = remember(app.iconBytes) {
+        app.iconBytes?.let { ImageUtils.byteArrayToBitmap(it)?.asImageBitmap() }
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(15.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle(!isEnabled) },
+        shape = FirstSightStyle.cardMedium,
         colors = CardDefaults.cardColors(
-            containerColor = if (isEnabled) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
+            containerColor = if (isEnabled) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+            } else {
                 MaterialTheme.colorScheme.surface
-        )
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppItem(
-                appName = app.appName,
-                iconBytes = app.iconBytes,
-                modifier = Modifier.size(60.dp),
-                onClick = {}
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(
-                modifier = Modifier.weight(1f)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(FirstSightStyle.small)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = app.appName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = app.packageName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (iconBitmap != null) {
+                    Image(
+                        bitmap = iconBitmap,
+                        contentDescription = app.appName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = app.appName,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-            
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = app.appName,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Switch(
                 checked = isEnabled,
                 onCheckedChange = onToggle

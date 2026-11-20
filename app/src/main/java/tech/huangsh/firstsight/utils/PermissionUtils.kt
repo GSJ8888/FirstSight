@@ -32,7 +32,8 @@ object PermissionUtils {
             Permission.READ_CONTACTS,
             Permission.CAMERA,
             Permission.ACCESS_FINE_LOCATION,
-            Permission.ACCESS_COARSE_LOCATION
+            Permission.ACCESS_COARSE_LOCATION,
+            Permission.GET_INSTALLED_APPS
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Permission.POST_NOTIFICATIONS)
