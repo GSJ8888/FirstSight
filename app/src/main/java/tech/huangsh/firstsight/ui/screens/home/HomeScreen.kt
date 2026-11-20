@@ -268,7 +268,10 @@ fun HomeScreen(viewModel: MainViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(13.dp),
                 contentPadding = PaddingValues(bottom = 0.dp)
             ) {
-                itemsIndexed(contacts) { index, contact ->
+                itemsIndexed(
+                    items = contacts,
+                    key = { _, contact -> contact.id }
+                ) { index, contact ->
                     ContactItem(
                         contact = contact,
                         onClick = { viewModel.showContactActions(contact) },

@@ -38,6 +38,23 @@ class VoiceAssistant(private val context: Context) : TextToSpeech.OnInitListener
     private var hasAudioFocus = false
 
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val lock = Any()
+
+    private data class PendingUtterance(
+        val text: String,
+        val volume: Float
+    )
+
+    @Volatile
+    private var pendingUtterance: PendingUtterance? = null
+
+    @Volatile
+    private var lastSpokenUtterance: PendingUtterance? = null
+
+    @Volatile
+    private var isInitializing = false
+
+    private var rebindAttempts = 0
 
     /**
      * 焦点变化回调
@@ -78,49 +95,109 @@ class VoiceAssistant(private val context: Context) : TextToSpeech.OnInitListener
     val languageAvailable: StateFlow<Boolean> = _languageAvailable.asStateFlow()
 
     init {
-        tts = TextToSpeech(context, this)
+        initTts()
+    }
+
+    private fun initTts() {
+        synchronized(lock) {
+            if (isInitializing) return
+            isInitializing = true
+            _isReady.value = false
+        }
+        val createAction = {
+            synchronized(lock) {
+                runCatching {
+                    tts?.shutdown()
+                }
+                tts = TextToSpeech(context.applicationContext, this)
+            }
+        }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            createAction()
+        } else {
+            mainHandler.post(createAction)
+        }
+    }
+
+    private fun rebindTts(replayUtterance: PendingUtterance? = null) {
+        synchronized(lock) {
+            if (replayUtterance != null) {
+                pendingUtterance = replayUtterance
+            }
+            if (isInitializing) return
+            _isReady.value = false
+        }
+        initTts()
     }
 
     override fun onInit(status: Int) {
-        if (status != TextToSpeech.SUCCESS) {
-            Log.e(TAG, "TTS init failed, status=$status")
-            _isReady.value = false
-            return
+        val toReplay: PendingUtterance?
+        synchronized(lock) {
+            isInitializing = false
+            if (status != TextToSpeech.SUCCESS) {
+                Log.e(TAG, "TTS init failed, status=$status")
+                _isReady.value = false
+                pendingUtterance = null
+                return
+            }
+
+            // 让系统把播报识别为无障碍语音，走辅助音频通道
+            tts?.setAudioAttributes(ttsAudioAttributes)
+
+            val result = tts?.setLanguage(Locale.CHINA)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e(TAG, "Chinese language not supported, result=$result")
+                _languageAvailable.value = false
+            } else {
+                _languageAvailable.value = true
+            }
+
+            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {
+                    rebindAttempts = 0
+                    _isSpeaking.value = true
+                }
+
+                override fun onDone(utteranceId: String?) {
+                    _isSpeaking.value = false
+                    lastSpokenUtterance = null
+                    abandonFocus()
+                }
+
+                @Deprecated("Deprecated in Java")
+                override fun onError(utteranceId: String?) {
+                    handleTtsError(errorCode = TextToSpeech.ERROR)
+                }
+
+                override fun onError(utteranceId: String?, errorCode: Int) {
+                    handleTtsError(errorCode = errorCode)
+                }
+            })
+
+            _isReady.value = true
+            toReplay = pendingUtterance
+            pendingUtterance = null
         }
 
-        // 让系统把播报识别为无障碍语音，走辅助音频通道
-        tts?.setAudioAttributes(ttsAudioAttributes)
-
-        val result = tts?.setLanguage(Locale.CHINA)
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            Log.e(TAG, "Chinese language not supported, result=$result")
-            _languageAvailable.value = false
+        if (toReplay != null) {
+            speak(toReplay.text, toReplay.volume)
         }
+    }
 
-        tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {
-                _isSpeaking.value = true
-            }
+    private fun handleTtsError(errorCode: Int) {
+        Log.e(TAG, "speak error, code=$errorCode")
+        _isSpeaking.value = false
+        abandonFocus()
 
-            override fun onDone(utteranceId: String?) {
-                _isSpeaking.value = false
-                abandonFocus()
-            }
-
-            @Deprecated("Deprecated in Java")
-            override fun onError(utteranceId: String?) {
-                _isSpeaking.value = false
-                abandonFocus()
-            }
-
-            override fun onError(utteranceId: String?, errorCode: Int) {
-                Log.e(TAG, "speak error, code=$errorCode")
-                _isSpeaking.value = false
-                abandonFocus()
-            }
-        })
-
-        _isReady.value = true
+        val shouldRebind = errorCode == TextToSpeech.ERROR_SERVICE ||
+            errorCode == TextToSpeech.ERROR_NOT_INSTALLED_YET ||
+            errorCode == TextToSpeech.ERROR
+        if (shouldRebind && rebindAttempts < MAX_REBIND_RETRIES) {
+            rebindAttempts++
+            val replay = lastSpokenUtterance
+            lastSpokenUtterance = null
+            rebindTts(replay)
+        }
     }
 
     /**
@@ -131,8 +208,18 @@ class VoiceAssistant(private val context: Context) : TextToSpeech.OnInitListener
      */
     fun speak(text: String, volume: Float = 1.0f) {
         if (text.isBlank()) return
-        val engine = tts ?: return
-        if (!_isReady.value) return
+
+        val engine: TextToSpeech = synchronized(lock) {
+            val currentEngine = tts
+            if (currentEngine == null || !_isReady.value) {
+                pendingUtterance = PendingUtterance(text, volume)
+                if (currentEngine == null && !isInitializing) {
+                    initTts()
+                }
+                return
+            }
+            currentEngine
+        }
 
         // 先拿焦点再打断上一条：中断会触发 onStop 回调，反过来释放刚申请的焦点
         requestFocus()
@@ -143,25 +230,43 @@ class VoiceAssistant(private val context: Context) : TextToSpeech.OnInitListener
         val params = Bundle().apply {
             putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, volume.coerceIn(0f, 1f))
         }
+        val utterance = PendingUtterance(text, volume)
+        lastSpokenUtterance = utterance
 
-        engine.speak(
+        val result = engine.speak(
             text,
             TextToSpeech.QUEUE_FLUSH,
             params,
             System.currentTimeMillis().toString()
         )
+        if (result != TextToSpeech.SUCCESS) {
+            Log.w(TAG, "engine.speak returned $result, attempting TTS rebind")
+            _isSpeaking.value = false
+            abandonFocus()
+            if (rebindAttempts < MAX_REBIND_RETRIES) {
+                rebindAttempts++
+                rebindTts(utterance)
+            }
+        }
     }
 
     fun stop() {
+        synchronized(lock) {
+            pendingUtterance = null
+            lastSpokenUtterance = null
+        }
         stopInternal()
         abandonFocus()
     }
 
     fun shutdown() {
         stop()
-        tts?.shutdown()
-        tts = null
-        _isReady.value = false
+        synchronized(lock) {
+            isInitializing = false
+            tts?.shutdown()
+            tts = null
+            _isReady.value = false
+        }
     }
 
     private fun stopInternal() {
@@ -219,5 +324,6 @@ class VoiceAssistant(private val context: Context) : TextToSpeech.OnInitListener
 
     private companion object {
         const val TAG = "VoiceAssistant"
+        const val MAX_REBIND_RETRIES = 2
     }
 }

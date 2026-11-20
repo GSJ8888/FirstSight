@@ -109,6 +109,9 @@
   <string name="voice_low_battery_alert_desc">未充电且电量低于设定值时，语音提醒及时充电</string>
   <string name="voice_low_battery_threshold">提醒电量阈值：低于 %1$d%%</string>
   <string name="low_battery_alert_speech">手机电量低，剩余百分之%1$d，请及时充电</string>
+  <string name="voice_full_battery_alert">充满电语音提醒</string>
+  <string name="voice_full_battery_alert_desc">充满电后语音提醒 1 分钟，拔掉电源即停止</string>
+  <string name="full_battery_alert_speech">电池已充满，请拔掉充电器</string>
 
   <!-- 呼叫播报 -->
   <string name="call_prompt_wechat_video">正在向%1$s发起微信视频，请勿操作手机</string>
@@ -125,6 +128,14 @@
   <string name="auto_start">开机自启动</string>
   <string name="system_update">系统更新</string>
   <string name="about_us">关于我们</string>
+  <string name="about_version_format">当前版本 v%1$s</string>
+  <string name="about_bilibili_title">作者哔哩哔哩主页</string>
+  <string name="about_bilibili_name">爱弹琴的小阿逗的个人空间</string>
+  <string name="about_donate_title">赞赏支持</string>
+  <string name="about_donate_desc">如果项目对您有帮助，就请作者喝杯咖啡吧！（点击图片可放大）</string>
+  <string name="about_donate_alipay">支付宝</string>
+  <string name="about_donate_wechat">微信支付</string>
+  <string name="about_open_link_failed">未找到可用浏览器打开链接</string>
   
   <!-- 桌面启动器设置 -->
   <string name="default_launcher_status">默认桌面状态</string>

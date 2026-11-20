@@ -139,6 +139,13 @@
             android:screenOrientation="user"
             android:theme="@style/Theme.FirstSight" tools:ignore="DiscouragedApi"/>
 
+    <!-- 关于Activity -->
+    <activity
+            android:name=".ui.activity.AboutActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.FirstSight" tools:ignore="DiscouragedApi"/>
+
     <!-- 提供者用于获取已安装应用列表 -->
     <provider
             android:name="androidx.core.content.FileProvider"

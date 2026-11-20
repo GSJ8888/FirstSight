@@ -326,8 +326,11 @@ fun ContactActionBottomSheet(
 
                     ActionButton(
                         text = stringResource(R.string.cancel),
-                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        backgroundColor = FirstSightStyle.profileColors(
+                            light = Color(0xFFEF5350),
+                            dark = Color(0xFFD94A4A)
+                        ),
+                        contentColor = Color.White,
                         onClick = { onCancelCall() }
                     )
                 }

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import tech.huangsh.firstsight.data.model.Settings
 import tech.huangsh.firstsight.ui.theme.FirstSightIcons
 import androidx.compose.material3.*
@@ -27,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.huangsh.firstsight.R
+import tech.huangsh.firstsight.ui.activity.AboutActivity
 import tech.huangsh.firstsight.ui.activity.AppManagementActivity
 import tech.huangsh.firstsight.ui.activity.ContactManagementActivity
 import tech.huangsh.firstsight.ui.activity.DisplaySettingsActivity
@@ -118,6 +120,16 @@ fun SettingsScreen(
 
             // 桌面启动器设置
             LauncherSettingsSection(settingsViewModel)
+
+            // 关于我们
+            SettingsItem(
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.about_us),
+                onClick = {
+                    val intent = Intent(context, AboutActivity::class.java)
+                    context.startActivity(intent)
+                }
+            )
         }
     }
 }

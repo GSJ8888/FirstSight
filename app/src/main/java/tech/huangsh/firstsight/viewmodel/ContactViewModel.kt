@@ -70,6 +70,19 @@ class ContactViewModel @Inject constructor(
     }
 
     /**
+     * 批量删除联系人
+     */
+    fun deleteContacts(contactsToDelete: List<Contact>, onComplete: (Int) -> Unit = {}) {
+        if (contactsToDelete.isEmpty()) return
+        viewModelScope.launch {
+            contactsToDelete.forEach { contact ->
+                contactRepository.deleteContact(contact)
+            }
+            onComplete(contactsToDelete.size)
+        }
+    }
+
+    /**
      * 编辑联系人
      */
     fun editContact(contact: Contact) {

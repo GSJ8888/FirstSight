@@ -138,6 +138,17 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * 更新充满电语音提醒开关
+     */
+    fun updateFullBatteryAlertEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                settingsRepository.updateFullBatteryAlertEnabled(enabled)
+            }
+        }
+    }
+
+    /**
      * 更新微信来电自动接听开关
      */
     fun updateWechatAutoAnswerEnabled(enabled: Boolean) {

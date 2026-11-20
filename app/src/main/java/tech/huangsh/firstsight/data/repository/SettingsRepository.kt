@@ -33,6 +33,7 @@ class SettingsRepository(private val context: Context) {
         val HOURLY_CHIME_ENABLED = booleanPreferencesKey("hourly_chime_enabled")
         val LOW_BATTERY_ALERT_ENABLED = booleanPreferencesKey("low_battery_alert_enabled")
         val LOW_BATTERY_THRESHOLD = intPreferencesKey("low_battery_threshold")
+        val FULL_BATTERY_ALERT_ENABLED = booleanPreferencesKey("full_battery_alert_enabled")
         val WECHAT_AUTO_ANSWER_ENABLED = booleanPreferencesKey("wechat_auto_answer_enabled")
         val WECHAT_AUTO_ANSWER_CONTACTS_ONLY = booleanPreferencesKey("wechat_auto_answer_contacts_only")
         val WECHAT_AUTO_SPEAKERPHONE = booleanPreferencesKey("wechat_auto_speakerphone")
@@ -97,6 +98,7 @@ class SettingsRepository(private val context: Context) {
             hourlyChimeEnabled = preferences[HOURLY_CHIME_ENABLED] ?: false,
             lowBatteryAlertEnabled = preferences[LOW_BATTERY_ALERT_ENABLED] ?: true,
             lowBatteryThreshold = (preferences[LOW_BATTERY_THRESHOLD] ?: 20).coerceIn(10, 50),
+            fullBatteryAlertEnabled = preferences[FULL_BATTERY_ALERT_ENABLED] ?: false,
             wechatAutoAnswerEnabled = preferences[WECHAT_AUTO_ANSWER_ENABLED] ?: false,
             wechatAutoAnswerContactsOnly = preferences[WECHAT_AUTO_ANSWER_CONTACTS_ONLY] ?: true,
             wechatAutoSpeakerphone = preferences[WECHAT_AUTO_SPEAKERPHONE] ?: false,
@@ -136,6 +138,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun updateLowBatteryThreshold(threshold: Int) {
         dataStore.edit { it[LOW_BATTERY_THRESHOLD] = threshold.coerceIn(10, 50) }
+    }
+
+    suspend fun updateFullBatteryAlertEnabled(enabled: Boolean) {
+        dataStore.edit { it[FULL_BATTERY_ALERT_ENABLED] = enabled }
     }
 
     suspend fun updateWechatAutoAnswerEnabled(enabled: Boolean) {

@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -478,14 +479,19 @@ fun AppManagementItem(
         app.iconBytes?.let { ImageUtils.byteArrayToBitmap(it)?.asImageBitmap() }
     }
 
+    val enabledContainerColor = lerp(
+        MaterialTheme.colorScheme.surface,
+        MaterialTheme.colorScheme.primaryContainer,
+        0.65f
+    )
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onToggle(!isEnabled) },
+        onClick = { onToggle(!isEnabled) },
+        modifier = Modifier.fillMaxWidth(),
         shape = FirstSightStyle.cardMedium,
         colors = CardDefaults.cardColors(
             containerColor = if (isEnabled) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                enabledContainerColor
             } else {
                 MaterialTheme.colorScheme.surface
             }

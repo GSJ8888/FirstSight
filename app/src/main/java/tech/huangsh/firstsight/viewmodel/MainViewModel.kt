@@ -16,8 +16,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tech.huangsh.firstsight.R
 import tech.huangsh.firstsight.data.model.Contact
@@ -117,6 +119,8 @@ class MainViewModel @Inject constructor(
     private var batteryReceiver: BroadcastReceiver? = null
     private var lastAlertedBatteryLevel: Int = Int.MAX_VALUE
     private var lastLowBatteryAlertAt: Long = 0L
+    private var hasAlertedFullBattery: Boolean = false
+    private var fullBatteryAlertJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -191,6 +195,7 @@ class MainViewModel @Inject constructor(
         WeChatData.onAutoAnswered = null
         unregisterAccessibilityObserver()
         unregisterBatteryReceiver()
+        stopFullBatteryAlert()
         NetworkUtils.unregisterNetworkCallback(appContext, networkCallback)
         networkCallback = null
     }
@@ -202,6 +207,7 @@ class MainViewModel @Inject constructor(
                 intent ?: return
                 val status = parseBatteryIntent(intent, readBatteryStatus(appContext))
                 checkLowBatteryAlert(status)
+                checkFullBatteryAlert(status)
             }
         }
         runCatching {
@@ -249,6 +255,60 @@ class MainViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * 充满电语音提醒检测
+     *
+     * 仅在充电中且电量达到 100%、总语音开关及充满电提醒开关均开启时触发。
+     * 每次充满仅触发一次，固定播报 1 分钟（不可调整时长），拔掉充电器或关闭开关立即停止。
+     */
+    private fun checkFullBatteryAlert(status: BatteryStatus) {
+        if (!status.isCharging || status.level < 100) {
+            hasAlertedFullBattery = false
+            stopFullBatteryAlert()
+            return
+        }
+
+        if (hasAlertedFullBattery || fullBatteryAlertJob?.isActive == true) return
+
+        viewModelScope.launch {
+            val current = settingsRepository.settings.first()
+            if (!current.voiceEnabled || !current.fullBatteryAlertEnabled) return@launch
+            if (hasAlertedFullBattery || fullBatteryAlertJob?.isActive == true) return@launch
+
+            hasAlertedFullBattery = true
+            startFullBatteryAlert()
+        }
+    }
+
+    private fun startFullBatteryAlert() {
+        stopFullBatteryAlert()
+        fullBatteryAlertJob = viewModelScope.launch(Dispatchers.IO) {
+            val endAt = SystemClock.uptimeMillis() + FULL_BATTERY_ALERT_DURATION_MS
+            while (isActive && SystemClock.uptimeMillis() < endAt) {
+                val latestSettings = settingsRepository.settings.first()
+                val latestBattery = readBatteryStatus(appContext)
+                if (!latestSettings.voiceEnabled ||
+                    !latestSettings.fullBatteryAlertEnabled ||
+                    !latestBattery.isCharging ||
+                    latestBattery.level < 100
+                ) {
+                    break
+                }
+                voiceAssistant.speak(
+                    text = appContext.getString(R.string.full_battery_alert_speech),
+                    volume = latestSettings.voiceVolume
+                )
+                delay(FULL_BATTERY_REPEAT_INTERVAL_MS)
+            }
+            fullBatteryAlertJob = null
+        }
+    }
+
+    private fun stopFullBatteryAlert() {
+        fullBatteryAlertJob?.cancel()
+        fullBatteryAlertJob = null
     }
 
     /**
@@ -603,5 +663,11 @@ class MainViewModel @Inject constructor(
 
         /** 低电量持续掉电时的最短重复播报间隔 */
         const val LOW_BATTERY_REPEAT_INTERVAL_MS = 10 * 60 * 1000L
+
+        /** 充满电语音提醒固定播报总时长：1 分钟（不可调整） */
+        const val FULL_BATTERY_ALERT_DURATION_MS = 60_000L
+
+        /** 充满电语音提醒轮询播报间隔 */
+        const val FULL_BATTERY_REPEAT_INTERVAL_MS = 5_000L
     }
 }

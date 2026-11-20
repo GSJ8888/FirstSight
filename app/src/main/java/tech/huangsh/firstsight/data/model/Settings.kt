@@ -13,6 +13,8 @@ data class Settings(
     // 低电量语音报警，默认开启，阈值默认 20%
     val lowBatteryAlertEnabled: Boolean = true,
     val lowBatteryThreshold: Int = 20,
+    // 充满电语音提醒，默认关闭，触发后固定播报 1 分钟
+    val fullBatteryAlertEnabled: Boolean = false,
     // 微信来电自动接听，默认关闭；开启时默认仅自动接听已添加的联系人，自动免提默认关闭
     val wechatAutoAnswerEnabled: Boolean = false,
     val wechatAutoAnswerContactsOnly: Boolean = true,

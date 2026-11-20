@@ -2,6 +2,7 @@ package tech.huangsh.firstsight.ui.screens.contact
 
 import android.Manifest
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import com.hjq.permissions.XXPermissions
 import com.hjq.permissions.OnPermissionCallback
 import androidx.compose.animation.core.Spring
@@ -18,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import tech.huangsh.firstsight.ui.theme.FirstSightIcons
 import androidx.compose.material3.*
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -88,6 +91,20 @@ fun ContactManagementScreen(
     var selectedContacts by remember { mutableStateOf<Set<Contact>>(emptySet()) }
     var searchQuery by remember { mutableStateOf("") }
 
+    // 批量删除状态
+    var isBatchDeleteMode by remember { mutableStateOf(false) }
+    var selectedDeleteIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var showBatchDeleteConfirm by remember { mutableStateOf(false) }
+
+    fun exitBatchDeleteMode() {
+        isBatchDeleteMode = false
+        selectedDeleteIds = emptySet()
+    }
+
+    BackHandler(enabled = isBatchDeleteMode) {
+        exitBatchDeleteMode()
+    }
+
     // Log contact data for debugging
     LaunchedEffect(contacts) {
         android.util.Log.d("ContactList", "Contacts loaded: ${contacts.size}")
@@ -140,24 +157,67 @@ fun ContactManagementScreen(
     ) {
         // 顶部栏 - 使用统一的样式
         CommonTopBar(
-            title = stringResource(R.string.contact_management),
-            onBack = onBack,
-            actions = {
-                IconButton(onAddContact) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.add_contact),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+            title = if (isBatchDeleteMode) {
+                "已选 ${selectedDeleteIds.size} 人"
+            } else {
+                stringResource(R.string.contact_management)
+            },
+            onBack = {
+                if (isBatchDeleteMode) {
+                    exitBatchDeleteMode()
+                } else {
+                    onBack()
                 }
-                IconButton(
-                    onClick = { requestContactsAndOpenImport() }
-                ) {
-                    Icon(
-                        imageVector = FirstSightIcons.ImportContacts,
-                        contentDescription = stringResource(R.string.import_contacts),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+            },
+            actions = {
+                if (isBatchDeleteMode) {
+                    val allSelected = localContacts.isNotEmpty() &&
+                        localContacts.all { it.id in selectedDeleteIds }
+                    TextButton(
+                        onClick = {
+                            selectedDeleteIds = if (allSelected) {
+                                emptySet()
+                            } else {
+                                localContacts.map { it.id }.toSet()
+                            }
+                        }
+                    ) {
+                        Text(if (allSelected) "取消全选" else "全选")
+                    }
+                    TextButton(onClick = { exitBatchDeleteMode() }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                } else {
+                    IconButton(onAddContact) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.add_contact),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    IconButton(
+                        onClick = { requestContactsAndOpenImport() }
+                    ) {
+                        Icon(
+                            imageVector = FirstSightIcons.ImportContacts,
+                            contentDescription = stringResource(R.string.import_contacts),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    if (contacts.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                isBatchDeleteMode = true
+                                selectedDeleteIds = emptySet()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "批量删除",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
                 }
             }
         )
@@ -193,7 +253,11 @@ fun ContactManagementScreen(
             }
         } else {
             Text(
-                text = "按住右侧三杠或长按卡片上下拖动排序，排在前面的将优先显示在首页",
+                text = if (isBatchDeleteMode) {
+                    "点击联系人进行勾选，确认后可一键批量删除"
+                } else {
+                    "按住右侧三杠或长按卡片上下拖动排序，排在前面的将优先显示在首页"
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -201,22 +265,72 @@ fun ContactManagementScreen(
             LazyColumn(
                 state = state.listState,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .weight(1f)
                     .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .reorderable(state),
+                    .let { if (isBatchDeleteMode) it else it.reorderable(state) },
                 verticalArrangement = Arrangement.spacedBy(15.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                contentPadding = PaddingValues(bottom = if (isBatchDeleteMode) 16.dp else 80.dp)
             ) {
                 items(localContacts, key = { it.id }) { contact ->
+                    val isSelected = contact.id in selectedDeleteIds
                     ReorderableItem(state, key = contact.id) { isDragging ->
                         DraggableContactItem(
                             contact = contact,
-                            isDragging = isDragging,
+                            isDragging = isDragging && !isBatchDeleteMode,
+                            isSelectionMode = isBatchDeleteMode,
+                            isSelected = isSelected,
                             onClick = {
-                                ContactDetailActivity.start(context, contact, true)
+                                if (isBatchDeleteMode) {
+                                    selectedDeleteIds = if (isSelected) {
+                                        selectedDeleteIds - contact.id
+                                    } else {
+                                        selectedDeleteIds + contact.id
+                                    }
+                                } else {
+                                    ContactDetailActivity.start(context, contact, true)
+                                }
                             },
                             reorderableState = state
                         )
+                    }
+                }
+            }
+
+            if (isBatchDeleteMode) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 4.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 20.dp, vertical = 14.dp)
+                    ) {
+                        Button(
+                            onClick = { showBatchDeleteConfirm = true },
+                            enabled = selectedDeleteIds.isNotEmpty(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFEF5350),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                text = if (selectedDeleteIds.isEmpty()) {
+                                    "请选择要删除的联系人"
+                                } else {
+                                    "删除所选联系人 (${selectedDeleteIds.size})"
+                                },
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
                 }
             }
@@ -262,6 +376,34 @@ fun ContactManagementScreen(
                 selectedContacts = emptySet()
                 searchQuery = ""
                 showImportBottomSheet = false
+            }
+        )
+    }
+
+    if (showBatchDeleteConfirm) {
+        val count = selectedDeleteIds.size
+        AlertDialog(
+            onDismissRequest = { showBatchDeleteConfirm = false },
+            title = { Text("确认批量删除") },
+            text = { Text("确定要删除选中的 $count 位联系人吗？删除后无法恢复。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val toDelete = localContacts.filter { it.id in selectedDeleteIds }
+                        showBatchDeleteConfirm = false
+                        viewModel.deleteContacts(toDelete) { deletedCount ->
+                            ToastUtils.show(context, "已删除 $deletedCount 位联系人")
+                            exitBatchDeleteMode()
+                        }
+                    }
+                ) {
+                    Text("删除", color = Color(0xFFD32F2F))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBatchDeleteConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
         )
     }
@@ -589,6 +731,8 @@ fun ImportContactsBottomSheet(
 fun DraggableContactItem(
     contact: Contact,
     isDragging: Boolean,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
     onClick: () -> Unit,
     reorderableState: ReorderableLazyListState
 ) {
@@ -603,11 +747,16 @@ fun DraggableContactItem(
                 scaleX = scale
                 scaleY = scale
             }
-            .detectReorderAfterLongPress(reorderableState),
+            .let { if (isSelectionMode) it else it.detectReorderAfterLongPress(reorderableState) },
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
             containerColor = when {
                 isDragging -> MaterialTheme.colorScheme.primaryContainer
+                isSelectionMode && isSelected -> lerp(
+                    MaterialTheme.colorScheme.surface,
+                    MaterialTheme.colorScheme.primaryContainer,
+                    0.55f
+                )
                 else -> MaterialTheme.colorScheme.surface
             }
         ),
@@ -619,8 +768,8 @@ fun DraggableContactItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .clickable(enabled = !isDragging) { onClick() },
+                .clickable(enabled = !isDragging) { onClick() }
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 头像
@@ -641,16 +790,23 @@ fun DraggableContactItem(
                 modifier = Modifier.weight(1f)
             )
             
-            // 三杠拖动手柄（按住直接拖动，无需长按等待）
-            Icon(
-                imageVector = FirstSightIcons.DragIndicator,
-                contentDescription = stringResource(R.string.drag_to_sort),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(48.dp)
-                    .detectReorder(reorderableState)
-                    .padding(10.dp)
-            )
+            if (isSelectionMode) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onClick() }
+                )
+            } else {
+                // 三杠拖动手柄（按住直接拖动，无需长按等待）
+                Icon(
+                    imageVector = FirstSightIcons.DragIndicator,
+                    contentDescription = stringResource(R.string.drag_to_sort),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .detectReorder(reorderableState)
+                        .padding(10.dp)
+                )
+            }
         }
     }
 }

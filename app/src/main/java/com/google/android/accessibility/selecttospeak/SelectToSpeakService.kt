@@ -256,13 +256,32 @@ class SelectToSpeakService : AccessibilityService() {
     }
 
     /**
-     * 点搜索结果第一条
+     * 点搜索结果中精确匹配目标微信昵称的条目
      *
-     * 输入文字后结果列表是异步加载的，这里靠轮询等它出现
+     * 输入文字后结果列表是异步加载的，按目标昵称精确校验后再点击，
+     * 避免旧搜索结果未刷新、或群聊/近似名称排在第一条时误打错人。
      */
     private fun stepOpenContact() {
-        val contact = findById(WeChatId.LIST.id) ?: return
-        if (contact.click()) advance(5)
+        val target = normalizeForMatch(WeChatData.value)
+        val root = rootInActiveWindow ?: return
+        val candidates = root.findAccessibilityNodeInfosByViewId(WeChatId.LIST.id)
+        if (candidates.isNullOrEmpty()) return
+
+        val matched = if (target.isNotEmpty()) {
+            candidates.firstOrNull { row ->
+                collectAllNodes(row).any { node ->
+                    normalizeForMatch(nodeLabel(node).orEmpty()) == target
+                }
+            }
+        } else {
+            candidates.firstOrNull()
+        }
+
+        if (matched == null) {
+            Log.d(tag, "stepOpenContact waiting for exact match: target=$target, candidates=${candidates.size}")
+            return
+        }
+        if (matched.click()) advance(5)
     }
 
     private fun stepOpenMore() {

@@ -258,6 +258,27 @@ fun VoiceSettingsScreen(
                         }
                     }
                 }
+
+                VoiceSettingsItem(
+                    icon = FirstSightIcons.BatterySaver,
+                    title = stringResource(R.string.voice_full_battery_alert)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.voice_full_battery_alert_desc),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = settings.fullBatteryAlertEnabled,
+                            onCheckedChange = { settingsViewModel.updateFullBatteryAlertEnabled(it) }
+                        )
+                    }
+                }
             }
         }
     }
